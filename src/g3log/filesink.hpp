@@ -26,10 +26,14 @@ namespace g3 {
 
 
    private:
+       void createLogFileDetails();
+
+   private:
       LogMessage::LogDetailsFunc _log_details_func;
 
       std::string _log_file_with_path;
       std::string _log_prefix_backup; // needed in case of future log file changes of directory
+      std::string _log_file_path;
       std::unique_ptr<std::ofstream> _outptr;
       std::string _header;
       bool _firstEntry;
@@ -39,6 +43,8 @@ namespace g3 {
          return *(_outptr.get());
       }
 
+      std::string date_;
+      std::string loggerID_;
 
       FileSink &operator=(const FileSink &) = delete;
       FileSink(const FileSink &other) = delete;

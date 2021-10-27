@@ -20,7 +20,7 @@
 
 namespace g3 {
    namespace internal {
-      static const std::string file_name_time_formatted = "%Y%m%d-%H%M%S";
+      static const std::string file_name_time_formatted = "%Y.%m.%d"/*"%Y%m%d-%H%M%S"*/;
 
       // check for filename validity -  filename should not be part of PATH
       bool isValidFilename(const std::string &prefix_filename) {
@@ -99,7 +99,8 @@ namespace g3 {
 
       bool openLogFile(const std::string &complete_file_with_path, std::ofstream &outstream) {
          std::ios_base::openmode mode = std::ios_base::out; // for clarity: it's really overkill since it's an ofstream
-         mode |= std::ios_base::trunc;
+         //mode |= std::ios_base::trunc;
+         mode |= std::ios_base::app;
          outstream.open(complete_file_with_path, mode);
          if (!outstream.is_open()) {
             std::ostringstream ss_error;
@@ -122,6 +123,8 @@ namespace g3 {
          return out;
       }
 
-
+      std::string getDate() {
+          return g3::localtime_formatted(std::chrono::system_clock::now(), file_name_time_formatted);
+      }
    }
 }
