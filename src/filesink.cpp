@@ -18,27 +18,13 @@ namespace g3 {
       : _log_details_func(&LogMessage::DefaultLogDetailsToString)
       ,_log_file_with_path(log_directory)
       , _log_prefix_backup(log_prefix)
+      , _log_file_path(log_directory)
       , _outptr(new std::ofstream)
-      , _header("\t\tLOG format: [YYYY/MM/DD hh:mm:ss uuu* LEVEL FILE->FUNCTION:LINE] messagen\n\t\t(uuu*: microseconds fractions of the seconds value)\n\n")
+      , _header("\t\tLOG format: [YYYY/MM/DD hh:mm:ss uuu* LEVEL FILE->FUNCTION:LINE] message\n\n\t\t(uuu*: microseconds fractions of the seconds value)\n\n")
       , _firstEntry(true)
+      , loggerID_(logger_id)
    {
-      _log_prefix_backup = prefixSanityFix(log_prefix);
-      if (!isValidFilename(_log_prefix_backup)) {
-         std::cerr << "g3log: forced abort due to illegal log prefix [" << log_prefix << "]" << std::endl;
-         abort();
-      }
-
-      std::string file_name = createLogFileName(_log_prefix_backup, logger_id);
-      _log_file_with_path = pathSanityFix(_log_file_with_path, file_name);
-      _outptr = createLogFile(_log_file_with_path);
-
-      if (!_outptr) {
-         std::cerr << "Cannot write log file to location, attempting current directory" << std::endl;
-         _log_file_with_path = "./" + file_name;
-         _outptr = createLogFile(_log_file_with_path);
-      }
-      assert(_outptr && "cannot open log file at startup");
-      
+       createLogFileDetails();
    }
 
 
@@ -57,6 +43,13 @@ namespace g3 {
       if (_firstEntry ) {
           addLogFileHeader();
          _firstEntry = false;
+      }
+
+      auto now = getDate();
+      if (now != date_) {
+          changeLogFile(_log_file_path + R"(\)", loggerID_);
+
+          date_ = now;
       }
 
       std::ofstream &out(filestream());
@@ -103,8 +96,28 @@ namespace g3 {
       _header = change;
    }
 
-
    void FileSink::addLogFileHeader() {
       filestream() << header(_header);
    }
+
+    void FileSink::createLogFileDetails() {
+        _log_prefix_backup = prefixSanityFix(_log_prefix_backup);
+        if (!isValidFilename(_log_prefix_backup)) {
+            std::cerr << "g3log: forced abort due to illegal log prefix [" << _log_prefix_backup << "]" << std::endl;
+            abort();
+        }
+
+        std::string file_name = createLogFileName(_log_prefix_backup, loggerID_);
+        _log_file_with_path = pathSanityFix(_log_file_with_path, file_name);
+        _outptr = createLogFile(_log_file_with_path);
+
+        if (!_outptr) {
+            std::cerr << "Cannot write log file to location, attempting current directory" << std::endl;
+            _log_file_with_path = "./" + file_name;
+            _outptr = createLogFile(_log_file_with_path);
+        }
+        assert(_outptr && "cannot open log file at startup");
+
+        date_ = getDate();
+    }
 } // g3
